@@ -1,0 +1,38 @@
+{
+  "name": "pemula-ts",
+  "version": "1.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "nodemon",
+    "start": "npx tsx ./src/index.ts",
+    "lint": "eslint .",
+    "build": "tsup"
+  },
+  "keywords": [],
+  "author": "adwerygaming",
+  "license": "ISC",
+  "type": "module",
+  "engines": {
+    "node": ">=21"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
+    "concurrently": "^10.0.0",
+    "eslint": "^9.39.2",
+    "jiti": "^2.7.0",
+    "nodemon": "^3.1.14",
+    "tsup": "^8.5.1",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "gradient-string": "^3.0.0",
+    "sharp": "^0.35.3",
+    "zod": "^4.4.3"
+  }
+}
