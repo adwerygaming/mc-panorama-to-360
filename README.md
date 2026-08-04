@@ -65,6 +65,9 @@ The generated 360-degree image is saved in the `output` folder.
 
 ![Sample combined 360-degree panorama result](docs/screenshots/sample_result.png)
 
+> [!TIP]
+> Use a 360-degree image viewer such as [360 Photo Cam](https://360photocam.com/online-viewer/)
+
 ## Installation
 
 ```bash
