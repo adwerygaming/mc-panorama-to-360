@@ -57,7 +57,7 @@ The source folder should contain Minecraft panorama images before running the co
 ![Folder containing panorama images before combining](docs/screenshots/before_combined.png)
 
 > [!TIP]
-> Use a mod such as [Panorama Screen](https://modrinth.com/mod/panorama_screen) to capture the panorama files from Minecraft Java.
+> Use a mod such as [Panorama ScreenMake](https://modrinth.com/mod/panorama_screen) to capture the panorama files from Minecraft Java.
 
 ### After combining
 
