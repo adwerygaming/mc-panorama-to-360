@@ -1,12 +1,8 @@
 <div align="center">
 
-# mc-panorama-to-360
+<h1>MC Panorama to 360 image</h1>
 
 Turn Minecraft Java panorama images into a single 360-degree equirectangular image.
-
-</div>
-
-<div align="center">
 
 ![License](https://img.shields.io/badge/license-ISC-blue?style=for-the-badge)
 ![TypeScript](https://img.shields.io/badge/typescript-6.0.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
@@ -16,29 +12,26 @@ Turn Minecraft Java panorama images into a single 360-degree equirectangular ima
 
 ## Table of Contents
 
-- [mc-panorama-to-360](#mc-panorama-to-360)
-  - [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Features](#features)
-  - [Tech Stack](#tech-stack)
-  - [Screenshots / Demo](#screenshots--demo)
-    - [Before combining](#before-combining)
-    - [After combining](#after-combining)
-  - [Installation](#installation)
-  - [Usage](#usage)
-    - [Expected input files](#expected-input-files)
-    - [Custom output size](#custom-output-size)
-    - [Cube cross output](#cube-cross-output)
-  - [Project Structure](#project-structure)
-  - [Contributing](#contributing)
-  - [License](#license)
-  - [Contact / Author](#contact--author)
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Screenshots / Demo](#screenshots--demo)
+  - [Before combining](#before-combining)
+  - [After combining](#after-combining)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Expected input files](#expected-input-files)
+  - [Custom output size](#custom-output-size)
+  - [Cube cross output](#cube-cross-output)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact / Author](#contact--author)
 
 ## Overview
 
 `mc-panorama-to-360` converts Minecraft Java panorama cubemap images into one 360-degree equirectangular PNG. It reads the panorama files from a Minecraft panorama screenshots folder and writes the combined result into the `output` folder.
-
-Use a mod such as [Panorama Screen](https://modrinth.com/mod/panorama_screen) to capture the panorama files from Minecraft Java.
 
 ## Features
 
@@ -54,9 +47,6 @@ Use a mod such as [Panorama Screen](https://modrinth.com/mod/panorama_screen) to
 - TypeScript
 - Node.js
 - Sharp
-- tsx
-- tsup
-- ESLint
 
 ## Screenshots / Demo
 
@@ -65,6 +55,9 @@ Use a mod such as [Panorama Screen](https://modrinth.com/mod/panorama_screen) to
 The source folder should contain Minecraft panorama images before running the converter.
 
 ![Folder containing panorama images before combining](docs/screenshots/before_combined.png)
+
+> [!TIP]
+> Use a mod such as [Panorama Screen](https://modrinth.com/mod/panorama_screen) to capture the panorama files from Minecraft Java.
 
 ### After combining
 
