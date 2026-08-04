@@ -1,16 +1,21 @@
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
-import { FaceData } from './types/FaceData.types.js';
+import { fileURLToPath } from "url";
+import { LoadFaceResult } from './types/LoadFaceResult.types.js';
 import directionToFace from './utils/DirectionToFace.js';
 import loadFace from './utils/LoadFace.js';
+import { renderCross } from './utils/RenderCross.js';
 import sampleBilinear from './utils/SampleBilinear.js';
+
+export const __filename = fileURLToPath(import.meta.url);
+export const __dirname = path.dirname(__filename);
 
 const FACE_MAP = {
   PZ: 'panorama_0.png', // south / front
-  NX: 'panorama_1.png', // west
+  NX: 'panorama_3.png', // west
   NZ: 'panorama_2.png', // north / back
-  PX: 'panorama_3.png', // east
+  PX: 'panorama_1.png', // east
   PY: 'panorama_4.png', // up
   NY: 'panorama_5.png', // down
 };
@@ -24,20 +29,28 @@ const ROTATE: { [key: string]: number } = {
   NZ: 0,
 };
 
-const outputFile = 'output.png';
-const [, , inputFolder, widthArg, heightArg] = process.argv;
+const rawArgs = process.argv.slice(2);
+const crossIndex = rawArgs.indexOf('--cross');
+const isCross = crossIndex !== -1;
 
+if (isCross) rawArgs.splice(crossIndex, 1);
+
+const outputFolder = path.join(__dirname, "..", 'output');
+
+if (!fs.existsSync(outputFolder)) fs.mkdirSync(outputFolder);
+
+const outputFile = path.join(outputFolder, `output-${Date.now()}.png`);
+
+const [inputFolder, arg3, arg4] = rawArgs;
 if (!inputFolder) {
-    console.error('Usage: npm start <screenshots_folder> <output.png> [width] [height]');
+    console.error('Usage:');
+    console.error('  node pano-to-equirect.js <screenshots_folder> <output.png> [width] [height]');
+    console.error('  node pano-to-equirect.js <screenshots_folder> <output.png> --cross [faceSize]');
     process.exit(1);
 }
 
-const outWidth = parseInt(widthArg, 10) || 4096;
-const outHeight = parseInt(heightArg, 10) || 2048;
-
 console.log('Loading 6 cube faces...');
-const faces: { [key: string]: FaceData } = {};
-
+const faces: { [key: string]: LoadFaceResult } = {};
 for (const [key, filename] of Object.entries(FACE_MAP)) {
     const filePath = path.join(inputFolder, filename);
     if (!fs.existsSync(filePath)) {
@@ -48,11 +61,21 @@ for (const [key, filename] of Object.entries(FACE_MAP)) {
     console.log(`  ${key} <- ${filename} (${faces[key].width}x${faces[key].height})`);
 }
 
+if (isCross) {
+    const faceSize = parseInt(arg3, 10) || faces.PZ.width;
+    await renderCross({ faces, faceSize, outputFile });
+    console.log(`Done. Cross layout saved to ${outputFile}`);
+    process.exit(0);
+}
+
+const outWidth = parseInt(arg3, 10) || 4096;
+const outHeight = parseInt(arg4, 10) || 2048;
+
 console.log(`Rendering equirectangular image at ${outWidth}x${outHeight}...`);
 const outBuffer = Buffer.alloc(outWidth * outHeight * 4);
 
 for (let j = 0; j < outHeight; j++) {
-    const phi = (j / outHeight - 0.5) * Math.PI; // -pi/2 .. pi/2
+    const phi = (0.5 - j / outHeight) * Math.PI; // +pi/2 (top/up) .. -pi/2 (bottom/down)
     for (let i = 0; i < outWidth; i++) {
         const theta = (i / outWidth - 0.5) * 2 * Math.PI; // -pi .. pi
 
