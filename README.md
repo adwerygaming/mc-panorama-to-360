@@ -16,7 +16,7 @@ Turn Minecraft Java panorama images into a single 360-degree equirectangular ima
 - [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
-- [Screenshots / Demo](#screenshots--demo)
+- [Demo](#demo)
   - [Before combining](#before-combining)
   - [After combining](#after-combining)
 - [Installation](#installation)
@@ -37,8 +37,6 @@ Turn Minecraft Java panorama images into a single 360-degree equirectangular ima
 - Reads standard panorama files from `panorama_0.png` through `panorama_5.png`.
 - Saves generated images to the `output` folder.
 - Uses bilinear sampling for smoother image output.
-- Supports custom output width and height.
-- Supports optional cube cross rendering with `--cross`.
 
 ## Tech Stack
 
@@ -46,7 +44,7 @@ Turn Minecraft Java panorama images into a single 360-degree equirectangular ima
 - Node.js
 - Sharp
 
-## Screenshots / Demo
+## Demo
 
 ### Before combining
 
@@ -54,8 +52,8 @@ The source folder should contain Minecraft panorama images before running the co
 
 ![Folder containing panorama images before combining](docs/screenshots/before_combined.png)
 
-> [!TIP]
-> Use a mod such as [Panorama ScreenMake](https://modrinth.com/mod/panorama_screen) to capture the panorama files from Minecraft Java.
+> [!WARNING]
+> You need to use mod [Panorama ScreenMake](https://modrinth.com/mod/panorama_screen) to capture get this program works. <a style="text-size: 0.2em;">(its hardcoded that way)</a>
 
 ### After combining
 
