@@ -22,8 +22,6 @@ Turn Minecraft Java panorama images into a single 360-degree equirectangular ima
 - [Installation](#installation)
 - [Usage](#usage)
   - [Expected input files](#expected-input-files)
-  - [Custom output size](#custom-output-size)
-  - [Cube cross output](#cube-cross-output)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
@@ -81,13 +79,7 @@ npm install
 Run the converter with the path to the folder that contains the Minecraft panorama PNG files.
 
 ```bash
-npm start <mc_path_leading_to_5_pano_pngs>
-```
-
-Example using a MultiMC instance path:
-
-```bash
-npm start /home/masdepan/.local/share/multimc/instances/26.2/.minecraft/panoramas/screenshots
+npm run start
 ```
 
 The result is written to the `output` folder with a generated filename such as:
@@ -109,30 +101,7 @@ panorama_4.png
 panorama_5.png
 ```
 
-### Custom output size
-
-The default output size is `4096x2048`.
-
-```bash
-npm start <screenshots_folder> 8192 4096
-```
-
-### Cube cross output
-
-Render the panorama faces into a cube cross layout:
-
-```bash
-npm start <screenshots_folder> --cross
-```
-
-Set a custom face size:
-
-```bash
-npm start <screenshots_folder> --cross 1024
-```
-
 ## Project Structure
-
 ```text
 .
 ├── docs/
