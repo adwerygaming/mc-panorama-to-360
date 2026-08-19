@@ -138,6 +138,12 @@ while (true) {
     const outputFile = await generateImage(panoDir);
     const endTime = Date.now();
     const diffMs = endTime - startTime;
+
+    if (!outputFile) {
+        console.log("Failed to generate the panorama image. Please make sure the folder contains the cube face images.");
+        await pressAnyKeyToContinue();
+        continue;
+    }
     
     console.log("========================================");
     console.log(`Done in ${diffMs}ms.`);

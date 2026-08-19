@@ -28,7 +28,7 @@ export async function generateImage(folderPath: string, width?: number, height?:
         const filePath = path.join(folderPath, filename);
         if (!fs.existsSync(filePath)) {
             console.error(`Missing file: ${filePath}`);
-            process.exit(1);
+            return null;
         }
 
         faces[key] = await loadFace(folderPath, filename, ROTATE[key]);
