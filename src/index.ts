@@ -1,102 +1,143 @@
+ 
+import { select, Separator } from '@inquirer/prompts';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
-import sharp from 'sharp';
+
 import { fileURLToPath } from "url";
-import { LoadFaceResult } from './types/LoadFaceResult.types.js';
-import directionToFace from './utils/DirectionToFace.js';
-import loadFace from './utils/LoadFace.js';
-import { renderCross } from './utils/RenderCross.js';
-import sampleBilinear from './utils/SampleBilinear.js';
+import { DatabaseService } from './db/DatabaseService.js';
+import { generateImage } from './utils/GenerateImage.js';
+import { pressAnyKeyToContinue } from './utils/PressAnyKeyToContinue.js';
+import { promptSetupMCInstanceFolder } from './utils/PromptSetupMCInstanceFolder.js';
 
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = path.dirname(__filename);
 
-const FACE_MAP = {
-  PZ: 'panorama_0.png', // south / front
-  NX: 'panorama_3.png', // west
-  NZ: 'panorama_2.png', // north / back
-  PX: 'panorama_1.png', // east
-  PY: 'panorama_4.png', // up
-  NY: 'panorama_5.png', // down
-};
+const db = new DatabaseService();
 
-const ROTATE: { [key: string]: number } = {
-  PX: 0,
-  NX: 0,
-  PY: 0,
-  NY: 0,
-  PZ: 0,
-  NZ: 0,
-};
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+while (true) {
+    console.clear();
 
-const rawArgs = process.argv.slice(2);
-const crossIndex = rawArgs.indexOf('--cross');
-const isCross = crossIndex !== -1;
+    console.log("Minecraft Panorama to 360 Image Converter");
+    console.log("");
 
-if (isCross) rawArgs.splice(crossIndex, 1);
+    const appdataPath = os.homedir();
+    let possibleMinecraftPath;
 
-const outputFolder = path.join(__dirname, "..", 'output');
-
-if (!fs.existsSync(outputFolder)) fs.mkdirSync(outputFolder);
-
-const outputFile = path.join(outputFolder, `output-${Date.now()}.png`);
-
-const [inputFolder, arg3, arg4] = rawArgs;
-if (!inputFolder) {
-    console.error('Usage:');
-    console.error('  node pano-to-equirect.js <screenshots_folder> <output.png> [width] [height]');
-    console.error('  node pano-to-equirect.js <screenshots_folder> <output.png> --cross [faceSize]');
-    process.exit(1);
-}
-
-console.log('Loading 6 cube faces...');
-const faces: { [key: string]: LoadFaceResult } = {};
-for (const [key, filename] of Object.entries(FACE_MAP)) {
-    const filePath = path.join(inputFolder, filename);
-    if (!fs.existsSync(filePath)) {
-        console.error(`Missing file: ${filePath}`);
-        process.exit(1);
+    const osType = process.platform;
+    switch (osType) {
+        case 'win32':
+            possibleMinecraftPath = path.join(appdataPath, 'AppData', 'Roaming', '.minecraft');
+            break;
+        case 'darwin':
+            possibleMinecraftPath = path.join(appdataPath, 'Library', 'Application Support', 'minecraft');
+            break;
+        case 'linux':
+            possibleMinecraftPath = path.join(appdataPath, '.minecraft');
+            break;
+        default:
+            console.error(`Unsupported OS: ${osType}`);
+            process.exit(1);
     }
-    faces[key] = await loadFace(inputFolder, filename, ROTATE[key]);
-    console.log(`  ${key} <- ${filename} (${faces[key].width}x${faces[key].height})`);
-}
 
-if (isCross) {
-    const faceSize = parseInt(arg3, 10) || faces.PZ.width;
-    await renderCross({ faces, faceSize, outputFile });
-    console.log(`Done. Cross layout saved to ${outputFile}`);
-    process.exit(0);
-}
+    const choices = [];
+    const mcPathExists = fs.existsSync(possibleMinecraftPath) && fs.statSync(possibleMinecraftPath).isDirectory();
+    if (mcPathExists) {
+        choices.push({
+            name: "Use default Minecraft path",
+            value: possibleMinecraftPath,
+            description: `Found Default Minecraft path at ${possibleMinecraftPath}`,
+        });
 
-const outWidth = parseInt(arg3, 10) || 4096;
-const outHeight = parseInt(arg4, 10) || 2048;
-
-console.log(`Rendering equirectangular image at ${outWidth}x${outHeight}...`);
-const outBuffer = Buffer.alloc(outWidth * outHeight * 4);
-
-for (let j = 0; j < outHeight; j++) {
-    const phi = (0.5 - j / outHeight) * Math.PI; // +pi/2 (top/up) .. -pi/2 (bottom/down)
-    for (let i = 0; i < outWidth; i++) {
-        const theta = (i / outWidth - 0.5) * 2 * Math.PI; // -pi .. pi
-
-        const x = Math.cos(phi) * Math.sin(theta);
-        const y = Math.sin(phi);
-        const z = Math.cos(phi) * Math.cos(theta);
-
-        const { face, u, v } = await directionToFace(x, y, z);
-        const pixel = await sampleBilinear(faces[face], u, v);
-
-        const outIdx = (j * outWidth + i) * 4;
-        outBuffer[outIdx] = pixel[0];
-        outBuffer[outIdx + 1] = pixel[1];
-        outBuffer[outIdx + 2] = pixel[2];
-        outBuffer[outIdx + 3] = pixel[3];
+        choices.push(new Separator());
     }
-    if (j % 256 === 0) console.log(`  row ${j}/${outHeight}`);
+
+    const historyEntries = await db.getHistoryEntries();
+    for (const entry of historyEntries) {
+        const isLastUsed = await db.isLastUsed(entry.folderPath);
+        
+        if (fs.existsSync(entry.folderPath) && fs.statSync(entry.folderPath).isDirectory()) {
+            choices.push({
+                name: `${entry.folderPath} ${isLastUsed ? "(last used)" : ""}`,
+                value: entry.folderPath,
+                description: `Last used at ${new Date(entry.timestamp).toLocaleString()}`,
+            });
+        }
+    }
+
+    if (choices.length === 0) {
+        console.log("No default Minecraft path found. Please add a new minecraft instances folder.");
+    }
+
+    choices.push(new Separator());
+    choices.push({
+        name: "Add new minecraft instances folder",
+        value: "add_new",
+        description: "Add a new minecraft instances folder",
+    });
+
+    choices.push({
+        name: "Exit program",
+        value: "exit",
+        description: "Exit the program",
+    });
+
+    const answer = await select({
+        message: 'Select your minecraft instances folder.',
+        choices,
+        loop: false
+    }).catch((err) => {
+        if (err instanceof Error && err.name === 'ExitPromptError') {
+            process.exit(0);
+        }
+        throw err;
+    });
+
+    switch (answer) {
+        case 'add_new':
+            possibleMinecraftPath = await promptSetupMCInstanceFolder();
+            break;
+
+        case 'exit':
+            console.clear();
+            console.log("Goodbye.");
+            process.exit(0);
+            break;
+        default:
+            possibleMinecraftPath = answer;
+            break;
+    }
+
+    await db.setLastUsedFolder(possibleMinecraftPath);
+
+    const panoDir = path.join(possibleMinecraftPath, 'panoramas', 'screenshots');
+    if (!fs.existsSync(panoDir) || !fs.statSync(panoDir).isDirectory()) {
+        console.log(`Cannot find the 6 cube faces in ${panoDir}. Make sure the folder exists and contains the 6 cube face images.`);  
+        console.log(`Recommended to use Mod such as Panorama ScreenMake to capture the panorama.`);
+        console.log(`Check it out on Modrinth: https://modrinth.com/mod/panorama_screen`);
+
+        await pressAnyKeyToContinue();
+        continue;
+    }
+
+    const startTime = Date.now();
+    const outputFile = await generateImage(panoDir);
+    const endTime = Date.now();
+    const diffMs = endTime - startTime;
+
+    if (!outputFile) {
+        console.log("Failed to generate the panorama image. Please make sure the folder contains the cube face images.");
+        await pressAnyKeyToContinue();
+        continue;
+    }
+    
+    console.log("========================================");
+    console.log(`Done in ${diffMs}ms.`);
+    console.log(`Panorama is saved at: ${outputFile}`);
+    console.log("========================================");
+    console.log("Press continue to go back to instances folder selection,");
+    console.log("========================================");
+
+    await pressAnyKeyToContinue();
 }
-
-await sharp(outBuffer, { raw: { width: outWidth, height: outHeight, channels: 4 } })
-    .png()
-    .toFile(outputFile);
-
-console.log(`Done. Saved to ${outputFile}`);

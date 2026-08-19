@@ -16,14 +16,12 @@ Turn Minecraft Java panorama images into a single 360-degree equirectangular ima
 - [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
-- [Screenshots / Demo](#screenshots--demo)
+- [Demo](#demo)
   - [Before combining](#before-combining)
   - [After combining](#after-combining)
 - [Installation](#installation)
 - [Usage](#usage)
   - [Expected input files](#expected-input-files)
-  - [Custom output size](#custom-output-size)
-  - [Cube cross output](#cube-cross-output)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
@@ -39,8 +37,6 @@ Turn Minecraft Java panorama images into a single 360-degree equirectangular ima
 - Reads standard panorama files from `panorama_0.png` through `panorama_5.png`.
 - Saves generated images to the `output` folder.
 - Uses bilinear sampling for smoother image output.
-- Supports custom output width and height.
-- Supports optional cube cross rendering with `--cross`.
 
 ## Tech Stack
 
@@ -48,7 +44,7 @@ Turn Minecraft Java panorama images into a single 360-degree equirectangular ima
 - Node.js
 - Sharp
 
-## Screenshots / Demo
+## Demo
 
 ### Before combining
 
@@ -56,8 +52,8 @@ The source folder should contain Minecraft panorama images before running the co
 
 ![Folder containing panorama images before combining](docs/screenshots/before_combined.png)
 
-> [!TIP]
-> Use a mod such as [Panorama ScreenMake](https://modrinth.com/mod/panorama_screen) to capture the panorama files from Minecraft Java.
+> [!WARNING]
+> You must use the [Panorama ScreenMake](https://modrinth.com/mod/panorama_screen) mod to capture panoramas for this program.  
 
 ### After combining
 
@@ -81,13 +77,7 @@ npm install
 Run the converter with the path to the folder that contains the Minecraft panorama PNG files.
 
 ```bash
-npm start <mc_path_leading_to_5_pano_pngs>
-```
-
-Example using a MultiMC instance path:
-
-```bash
-npm start /home/masdepan/.local/share/multimc/instances/26.2/.minecraft/panoramas/screenshots
+npm run start
 ```
 
 The result is written to the `output` folder with a generated filename such as:
@@ -109,30 +99,7 @@ panorama_4.png
 panorama_5.png
 ```
 
-### Custom output size
-
-The default output size is `4096x2048`.
-
-```bash
-npm start <screenshots_folder> 8192 4096
-```
-
-### Cube cross output
-
-Render the panorama faces into a cube cross layout:
-
-```bash
-npm start <screenshots_folder> --cross
-```
-
-Set a custom face size:
-
-```bash
-npm start <screenshots_folder> --cross 1024
-```
-
 ## Project Structure
-
 ```text
 .
 ├── docs/
