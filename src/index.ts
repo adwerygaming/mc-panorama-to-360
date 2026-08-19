@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
  
 import { select, Separator } from '@inquirer/prompts';
 import fs from 'fs';
@@ -16,24 +15,7 @@ export const __dirname = path.dirname(__filename);
 
 const db = new DatabaseService();
 
-export const FACE_MAP = {
-    PZ: 'panorama_0.png', // south / front
-    NX: 'panorama_3.png', // west
-    NZ: 'panorama_2.png', // north / back
-    PX: 'panorama_1.png', // east
-    PY: 'panorama_4.png', // up
-    NY: 'panorama_5.png', // down
-};
-
-export const ROTATE: { [key: string]: number } = {
-    PX: 0,
-    NX: 0,
-    PY: 0,
-    NY: 0,
-    PZ: 0,
-    NZ: 0,
-};
-
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 while (true) {
     console.clear();
 
@@ -43,15 +25,15 @@ while (true) {
     const appdataPath = os.homedir();
     let possibleMinecraftPath;
 
-    const osType = os.type();
+    const osType = process.platform;
     switch (osType) {
-        case 'Windows_NT':
+        case 'win32':
             possibleMinecraftPath = path.join(appdataPath, 'AppData', 'Roaming', '.minecraft');
             break;
-        case 'Darwin':
+        case 'darwin':
             possibleMinecraftPath = path.join(appdataPath, 'Library', 'Application Support', 'minecraft');
             break;
-        case 'Linux':
+        case 'linux':
             possibleMinecraftPath = path.join(appdataPath, '.minecraft');
             break;
         default:
@@ -105,6 +87,11 @@ while (true) {
         message: 'Select your minecraft instances folder.',
         choices,
         loop: false
+    }).catch((err) => {
+        if (err instanceof Error && err.name === 'ExitPromptError') {
+            process.exit(0);
+        }
+        throw err;
     });
 
     switch (answer) {
@@ -126,7 +113,7 @@ while (true) {
 
     const panoDir = path.join(possibleMinecraftPath, 'panoramas', 'screenshots');
     if (!fs.existsSync(panoDir) || !fs.statSync(panoDir).isDirectory()) {
-        console.log(`Can't found the 5 cube faces in ${panoDir}. Please make sure the folder exists and contains the 5 cube face images.`);
+        console.log(`Cannot find the 6 cube faces in ${panoDir}. Make sure the folder exists and contains the 6 cube face images.`);  
         console.log(`Recommended to use Mod such as Panorama ScreenMake to capture the panorama.`);
         console.log(`Check it out on Modrinth: https://modrinth.com/mod/panorama_screen`);
 

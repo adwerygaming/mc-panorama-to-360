@@ -12,7 +12,7 @@ export async function promptSetupMCInstanceFolder(): Promise<string> {
     console.log("-> Linux: /home/<username>/.minecraft");
     console.log("");
 
-    const mcInstancePath = await input({
+    const rawInput = await input({
         message: 'Enter the path to your minecraft instances folder (ends with .minecraft):',
         validate: (input) => {
             if (!input || input.trim() === '') return 'Path cannot be empty.';
@@ -24,6 +24,8 @@ export async function promptSetupMCInstanceFolder(): Promise<string> {
         }
     });
 
+    const mcInstancePath = path.resolve(rawInput.trim());
+    
     const verification = await select({
         message: `You entered: ${mcInstancePath}. Is this correct?`,
         choices: [

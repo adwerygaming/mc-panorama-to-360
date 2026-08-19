@@ -53,7 +53,7 @@ The source folder should contain Minecraft panorama images before running the co
 ![Folder containing panorama images before combining](docs/screenshots/before_combined.png)
 
 > [!WARNING]
-> You need to use mod [Panorama ScreenMake](https://modrinth.com/mod/panorama_screen) to capture get this program work.
+> You must use the [Panorama ScreenMake](https://modrinth.com/mod/panorama_screen) mod to capture panoramas for this program.  
 
 ### After combining
 

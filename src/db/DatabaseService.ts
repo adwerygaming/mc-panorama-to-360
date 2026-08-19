@@ -1,6 +1,6 @@
 import { db } from "./Client.js";
 
-interface HistoryEntry {
+export interface HistoryEntry {
     timestamp: number;
     folderPath: string;
 }

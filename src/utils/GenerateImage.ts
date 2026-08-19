@@ -1,14 +1,14 @@
 import fs from 'fs';
 import path from "node:path";
 import sharp from 'sharp';
-import { FACE_MAP, ROTATE, __dirname } from '../index.js';
+import { FACE_MAP, ROTATE } from '../config.js';
 import { LoadFaceResult } from '../types/LoadFaceResult.types.js';
 import directionToFace from './DirectionToFace.js';
 import loadFace from './LoadFace.js';
 import sampleBilinear from './SampleBilinear.js';
 
 export async function generateImage(folderPath: string, width?: number, height?: number): Promise<string | null> {
-    const outputFolder = path.join(__dirname, "..", 'output');
+    const outputFolder = path.join(process.cwd(), "..", 'output');
 
     if (!fs.existsSync(outputFolder)) fs.mkdirSync(outputFolder);
 
@@ -65,9 +65,15 @@ export async function generateImage(folderPath: string, width?: number, height?:
         if (j % 256 === 0) console.log(`-> row ${j}/${outHeight}`);
     }
 
-    await sharp(outBuffer, { raw: { width: outWidth, height: outHeight, channels: 4 } })
-        .png()
-        .toFile(outputFilePath);
+    try {
+        await sharp(outBuffer, { raw: { width: outWidth, height: outHeight, channels: 4 } })
+            .png()
+            .toFile(outputFilePath);
 
+    } catch (e) {
+        console.error("Error saving the output image:", e);
+        return null;
+    }
+    
     return outputFilePath;
 }
