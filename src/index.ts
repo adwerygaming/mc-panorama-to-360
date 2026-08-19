@@ -1,23 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
  
-import { input, select, Separator } from '@inquirer/prompts';
+import { select, Separator } from '@inquirer/prompts';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import sharp from 'sharp';
+
 import { fileURLToPath } from "url";
 import { DatabaseService } from './db/DatabaseService.js';
-import { LoadFaceResult } from './types/LoadFaceResult.types.js';
-import directionToFace from './utils/DirectionToFace.js';
-import loadFace from './utils/LoadFace.js';
-import sampleBilinear from './utils/SampleBilinear.js';
+import { generateImage } from './utils/GenerateImage.js';
+import { pressAnyKeyToContinue } from './utils/PressAnyKeyToContinue.js';
+import { promptSetupMCInstanceFolder } from './utils/PromptSetupMCInstanceFolder.js';
 
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = path.dirname(__filename);
 
 const db = new DatabaseService();
 
-const FACE_MAP = {
+export const FACE_MAP = {
     PZ: 'panorama_0.png', // south / front
     NX: 'panorama_3.png', // west
     NZ: 'panorama_2.png', // north / back
@@ -26,7 +25,7 @@ const FACE_MAP = {
     NY: 'panorama_5.png', // down
 };
 
-const ROTATE: { [key: string]: number } = {
+export const ROTATE: { [key: string]: number } = {
     PX: 0,
     NX: 0,
     PY: 0,
@@ -34,10 +33,6 @@ const ROTATE: { [key: string]: number } = {
     PZ: 0,
     NZ: 0,
 };
-
-async function pressAnyKeyToContinue(): Promise<void> {
-    await input({ message: 'Press any key to continue...', validate: () => true });
-}
 
 while (true) {
     console.clear();
@@ -100,16 +95,31 @@ while (true) {
         description: "Add a new minecraft instances folder",
     });
 
+    choices.push({
+        name: "Exit program",
+        value: "exit",
+        description: "Exit the program",
+    });
+
     const answer = await select({
         message: 'Select your minecraft instances folder.',
         choices,
         loop: false
     });
 
-    if (answer === "add_new") {
-        possibleMinecraftPath = await promptSetupMCInstanceFolder();
-    } else {
-        possibleMinecraftPath = answer;
+    switch (answer) {
+        case 'add_new':
+            possibleMinecraftPath = await promptSetupMCInstanceFolder();
+            break;
+
+        case 'exit':
+            console.clear();
+            console.log("Goodbye.");
+            process.exit(0);
+            break;
+        default:
+            possibleMinecraftPath = answer;
+            break;
     }
 
     await db.setLastUsedFolder(possibleMinecraftPath);
@@ -137,109 +147,4 @@ while (true) {
     console.log("========================================");
 
     await pressAnyKeyToContinue();
-}
-
-async function promptSetupMCInstanceFolder(): Promise<string> {
-    console.log("Example paths:");
-    console.log("-> Windows: C:\\Users\\<username>\\AppData\\Roaming\\.minecraft");
-    console.log("-> Mac: /Users/<username>/Library/Application Support/minecraft");
-    console.log("-> Linux: /home/<username>/.minecraft");
-    console.log("");
-
-    const mcInstancePath = await input({
-        message: 'Enter the path to your minecraft instances folder (ends with .minecraft):',
-        validate: (input) => {
-            if (!input || input.trim() === '') return 'Path cannot be empty.';
-            
-            const resolvedPath = path.resolve(input);
-            if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isDirectory()) return 'Invalid path. Please enter a valid directory.';
-            
-            return true;
-        }
-    });
-
-    const verification = await select({
-        message: `You entered: ${mcInstancePath}. Is this correct?`,
-        choices: [
-            { name: 'Yes', value: true },
-            { name: 'No', value: false }
-        ]
-    });
-
-    if (!verification) {
-        return await promptSetupMCInstanceFolder();
-    }
-
-    const dupCheck = await db.getHistoryEntryByFolderPath(mcInstancePath);
-    if (!dupCheck) {
-        await db.addHistoryEntry(mcInstancePath);
-        console.log(`Added ${mcInstancePath} to history.`);        
-    }
-
-    return mcInstancePath;
-}
-
-async function generateImage(folderPath: string, width?: number, height?: number): Promise<string | null> {
-    const outputFolder = path.join(__dirname, "..", 'output');
-
-    if (!fs.existsSync(outputFolder)) fs.mkdirSync(outputFolder);
-
-    const outputFileName = `output-${Date.now()}.png`;
-    const outputFilePath = path.join(outputFolder, outputFileName);
-
-    const folderExist = fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory();
-
-    if (!folderPath || !folderExist) {
-        return null;
-    }
-
-    console.log('Loading 6 cube faces...');
-
-    const faces: { [key: string]: LoadFaceResult } = {};
-    for (const [key, filename] of Object.entries(FACE_MAP)) {
-        const filePath = path.join(folderPath, filename);
-        if (!fs.existsSync(filePath)) {
-            console.error(`Missing file: ${filePath}`);
-            process.exit(1);
-        }
-
-        faces[key] = await loadFace(folderPath, filename, ROTATE[key]);
-        console.log(`-> ${filename} (${key}, ${faces[key].width}x${faces[key].height})`);
-    }
-
-    const outWidth = width || 4096;
-    const outHeight = height || 2048;
-
-    console.log("");
-    console.log(`Rendering equirectangular image at ${outWidth}x${outHeight}...`);
-
-    const outBuffer = Buffer.alloc(outWidth * outHeight * 4);
-
-    for (let j = 0; j < outHeight; j++) {
-        const phi = (0.5 - j / outHeight) * Math.PI; // +pi/2 (top/up) .. -pi/2 (bottom/down)
-        for (let i = 0; i < outWidth; i++) {
-            const theta = (i / outWidth - 0.5) * 2 * Math.PI; // -pi .. pi
-
-            const x = Math.cos(phi) * Math.sin(theta);
-            const y = Math.sin(phi);
-            const z = Math.cos(phi) * Math.cos(theta);
-
-            const { face, u, v } = await directionToFace(x, y, z);
-            const pixel = await sampleBilinear(faces[face], u, v);
-
-            const outIdx = (j * outWidth + i) * 4;
-            outBuffer[outIdx] = pixel[0];
-            outBuffer[outIdx + 1] = pixel[1];
-            outBuffer[outIdx + 2] = pixel[2];
-            outBuffer[outIdx + 3] = pixel[3];
-        }
-
-        if (j % 256 === 0) console.log(`-> row ${j}/${outHeight}`);
-    }
-
-    await sharp(outBuffer, { raw: { width: outWidth, height: outHeight, channels: 4 } })
-        .png()
-        .toFile(outputFilePath);
-
-    return outputFilePath;
 }
